@@ -1,92 +1,41 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
 import React from 'react';
-import type {Node} from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
-  Text,
-  useColorScheme,
-  View,
+  Text
 } from 'react-native';
-
+// import AppNavigator from './src/navigation';
+import HomeScreen from './src/containers/Home';
+import { Provider } from 'react-redux';
+import { createStore, compose, applyMiddleware } from 'redux';
+import { watchAddNote } from './src/redux/sagas';
+import reducers from './src/redux/reducers';
+import {persistStore} from 'redux-persist';
+import {PersistGate} from 'redux-persist/es/integration/react';
+import createSagaMiddleware from 'redux-saga';
+import AppNavigator from './src/navigation';
 import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  GoogleSignin
+} from '@react-native-google-signin/google-signin';
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+const App = () => {
+  GoogleSignin.configure({
+    webClientId: "10381853266-uimturbvhmslqkvr2dinpvg0irkq938q.apps.googleusercontent.com",
+    androidClientId: "10381853266-418d05l8lu5v2ndd8e2d8mfnd0lv2d75.apps.googleusercontent.com"
+  });
+  let store = null;
+  const sagaMiddleware = createSagaMiddleware();
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  store = compose(applyMiddleware(sagaMiddleware))(createStore)(reducers);
+  const persistor = persistStore(store);
+  sagaMiddleware.run(watchAddNote);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+   <Provider store={store}>
+      <PersistGate persistor={persistor}>
+        <AppNavigator />
+      </PersistGate>
+    </Provider>
   );
 };
 
